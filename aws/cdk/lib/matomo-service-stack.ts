@@ -9,9 +9,6 @@ import { Construct } from "constructs";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { IVpc } from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
-import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
-import * as sns from "aws-cdk-lib/aws-sns";
-import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import { EnvironmentConfig } from "./config/environment-config";
 
 interface MatomoServiceStackProps extends cdk.StackProps {
@@ -27,8 +24,13 @@ interface MatomoServiceStackProps extends cdk.StackProps {
 }
 
 export class MatomoServiceStack extends cdk.Stack {
+  public readonly fargateService: ecs.FargateService;
+  public readonly targetGroup: elbv2.ApplicationTargetGroup;
+  public readonly envConfig: EnvironmentConfig;
+
   constructor(scope: Construct, id: string, props: MatomoServiceStackProps) {
     super(scope, id, props);
+    this.envConfig = props.envConfig;
 
     const vpc = props.vpc;
 
@@ -182,21 +184,17 @@ export class MatomoServiceStack extends cdk.Stack {
       protocol: elbv2.ApplicationProtocol.HTTP,
     });
 
-    const fargateService = new ecs.FargateService(
-      this,
-      "MatomoFargateService",
-      {
-        cluster,
-        taskDefinition,
-        desiredCount: 2,
-        assignPublicIp: false,
-        vpcSubnets: { subnets: appSubnetIds },
-        securityGroups: [appSecurityGroup],
-      },
-    );
+    this.fargateService = new ecs.FargateService(this, "MatomoFargateService", {
+      cluster,
+      taskDefinition,
+      desiredCount: 2,
+      assignPublicIp: false,
+      vpcSubnets: { subnets: appSubnetIds },
+      securityGroups: [appSecurityGroup],
+    });
 
     // Auto-scaling configuration - scale on cpu & memory utilization of 70%
-    const scalableTaskCount = fargateService.autoScaleTaskCount({
+    const scalableTaskCount = this.fargateService.autoScaleTaskCount({
       minCapacity: 2,
       maxCapacity: 4,
     });
@@ -211,9 +209,9 @@ export class MatomoServiceStack extends cdk.Stack {
       scaleOutCooldown: cdk.Duration.seconds(60),
     });
 
-    const targetGroup = listener.addTargets("MatomoTarget", {
+    this.targetGroup = listener.addTargets("MatomoTarget", {
       port: 8080,
-      targets: [fargateService],
+      targets: [this.fargateService],
       healthCheck: {
         path: "/index.php",
         interval: cdk.Duration.seconds(60),
@@ -264,10 +262,14 @@ export class MatomoServiceStack extends cdk.Stack {
       securityGroups: [webSecurityGroup],
     });
 
-    // Create HTTP API Gateway
+    // Create HTTP API Gateway with CORS configuration
     const httpApi = new apigwv2.HttpApi(this, "MatomoHttpApi", {
       apiName: "MatomoServiceApi",
       description: "HTTP API Gateway for Matomo Service",
+      corsPreflight: {
+        allowOrigins: props.envConfig.allowedOrigins,
+        maxAge: cdk.Duration.days(1),
+      },
     });
 
     // Set up API Gateway integration with the ALB via VPC Link
@@ -292,110 +294,5 @@ export class MatomoServiceStack extends cdk.Stack {
       description: "Internal ALB DNS Name (Accessible within VPC)",
       value: alb.loadBalancerDnsName,
     });
-
-    // Add alerting on metrics
-    const alertTopic = new sns.Topic(this, "MatomoAlertTopic", {
-      displayName: "Matomo Service Alerts",
-    });
-    props.envConfig.notificationEmails.forEach((email) => {
-      alertTopic.addSubscription(new subscriptions.EmailSubscription(email));
-    });
-
-    // CPU Utilization Alarm - 2/3 datapoints breaching 85% over 3 mins
-    const cpuAlarm = new cloudwatch.Alarm(this, "MatomoCpuAlarm", {
-      metric: fargateService.metricCpuUtilization({
-        period: cdk.Duration.minutes(1),
-      }),
-      threshold: 85,
-      evaluationPeriods: 3,
-      datapointsToAlarm: 2,
-      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-      alarmDescription: "CPU utilization is too high",
-    });
-    cpuAlarm.addAlarmAction(
-      new cdk.aws_cloudwatch_actions.SnsAction(alertTopic),
-    );
-
-    // Memory Utilization Alarm - 2/3 datapoints breaching 85% over 3 mins
-    const memoryAlarm = new cloudwatch.Alarm(this, "MatomoMemoryAlarm", {
-      metric: fargateService.metricMemoryUtilization({
-        period: cdk.Duration.minutes(1),
-      }),
-      threshold: 85,
-      evaluationPeriods: 3,
-      datapointsToAlarm: 2,
-      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-      alarmDescription: "Memory utilization is too high",
-    });
-    memoryAlarm.addAlarmAction(
-      new cdk.aws_cloudwatch_actions.SnsAction(alertTopic),
-    );
-
-    // Service Health Alarm (based on unhealthy hosts) - 2/2 datapoints breaching 1 over 2 mins
-    const unhealthyHostsAlarm = new cloudwatch.Alarm(
-      this,
-      "UnhealthyHostsAlarm",
-      {
-        metric: targetGroup.metrics.unhealthyHostCount({
-          period: cdk.Duration.minutes(2),
-        }),
-        threshold: 1,
-        evaluationPeriods: 2,
-        datapointsToAlarm: 2,
-        comparisonOperator:
-          cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        alarmDescription: "There are unhealthy hosts in the target group",
-      },
-    );
-    unhealthyHostsAlarm.addAlarmAction(
-      new cdk.aws_cloudwatch_actions.SnsAction(alertTopic),
-    );
-
-    // CloudWatch Dashboard for Matomo host
-    const dashboard = new cloudwatch.Dashboard(this, "MatomoDashboard", {
-      dashboardName: "Matomo-Service-Metrics",
-    });
-
-    // Add metrics to the dashboard
-    dashboard.addWidgets(
-      new cloudwatch.GraphWidget({
-        title: "CPU and Memory Utilization",
-        left: [fargateService.metricCpuUtilization()],
-        right: [fargateService.metricMemoryUtilization()],
-        leftAnnotations: [
-          {
-            value: 85,
-            label: "CPU Alert (>85%, 2/3 points over 3m)",
-            color: "#ff6961",
-          },
-        ],
-        rightAnnotations: [
-          {
-            value: 85,
-            label: "Memory Alert (>85%, 2/3 points over 3m)",
-            color: "#ff6961",
-          },
-        ],
-      }),
-      new cloudwatch.GraphWidget({
-        title: "Request Count and Target Response Time",
-        left: [targetGroup.metrics.requestCount()],
-        right: [targetGroup.metrics.targetResponseTime()],
-      }),
-      new cloudwatch.GraphWidget({
-        title: "Healthy/Unhealthy Hosts",
-        left: [
-          targetGroup.metrics.healthyHostCount(),
-          targetGroup.metrics.unhealthyHostCount(),
-        ],
-        leftAnnotations: [
-          {
-            value: 1,
-            label: "Unhealthy Hosts Alert (≥1, 2/2 points over 2m)",
-            color: "#ff6961",
-          },
-        ],
-      }),
-    );
   }
 }

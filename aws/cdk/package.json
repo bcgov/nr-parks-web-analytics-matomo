@@ -7,24 +7,26 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "cdk": "cdk",
     "deploy:dev": "cdk deploy --context stage=dev --all",
     "deploy:prod": "cdk deploy --context stage=prod --all",
     "diff:dev": "cdk diff --context stage=dev",
     "diff:prod": "cdk diff --context stage=prod",
     "destroy:dev": "cdk destroy --context stage=dev --all",
-    "destroy:prod": "cdk destroy --context stage=prod --all"
+    "destroy:prod": "cdk destroy --context stage=prod --all",
+    "prettier-fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",
+    "@vitest/coverage-v8": "1.6.0",
     "aws-cdk": "2.1010.0",
-    "jest": "^29.7.0",
     "prettier": "^3.5.3",
-    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "~5.6.3"
+    "typescript": "~5.6.3",
+    "vitest": "1.6.0"
   },
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.787.0",

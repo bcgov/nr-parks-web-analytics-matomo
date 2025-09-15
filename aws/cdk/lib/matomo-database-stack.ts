@@ -8,6 +8,7 @@ import { IVpc } from "aws-cdk-lib/aws-ec2";
 interface MatomoDatabaseStackProps extends cdk.StackProps {
   vpc: IVpc;
   dataSubnetIds: string[];
+  rdsSecurityGroup?: ec2.ISecurityGroup;
 }
 
 export class MatomoDatabaseStack extends cdk.Stack {
@@ -20,20 +21,18 @@ export class MatomoDatabaseStack extends cdk.Stack {
 
     const vpc = props.vpc;
 
-    if (!props.dataSubnetIds.length) {
-      throw new Error("No data subnets provided");
-    }
-
     const privateSubnets = props.dataSubnetIds.map((subnetId) =>
       ec2.Subnet.fromSubnetId(this, `PrivateSubnet-${subnetId}`, subnetId),
     );
 
-    this.rdsSecurityGroup = ec2.SecurityGroup.fromLookupByName(
-      this,
-      "MatomoRdsSecurityGroup",
-      "Data",
-      vpc,
-    );
+    this.rdsSecurityGroup =
+      props.rdsSecurityGroup ||
+      ec2.SecurityGroup.fromLookupByName(
+        this,
+        "MatomoRdsSecurityGroup",
+        "Data",
+        vpc,
+      );
 
     this.dbSecret = new secretsmanager.Secret(this, "MatomoDbCredentials", {
       secretName: "matomo-rds-credentials",

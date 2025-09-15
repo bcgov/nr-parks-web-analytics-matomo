@@ -98,16 +98,6 @@ export class VpcLookupStack extends Stack {
     this._webSubnetIds = filterSubnets("Web");
     this._dataSubnetIds = filterSubnets("Data");
 
-    if (!this._appSubnetIds.length) {
-      throw new Error("No app subnets found");
-    }
-    if (!this._webSubnetIds.length) {
-      throw new Error("No web subnets found");
-    }
-    if (!this._dataSubnetIds.length) {
-      throw new Error("No data subnets found");
-    }
-
     console.log(`App Subnets: ${this._appSubnetIds.join(", ")}`);
     console.log(`Web Subnets: ${this._webSubnetIds.join(", ")}`);
     console.log(`Data Subnets: ${this._dataSubnetIds.join(", ")}`);
