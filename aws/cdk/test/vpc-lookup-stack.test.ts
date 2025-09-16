@@ -97,10 +97,12 @@ describe("VpcLookupStack", () => {
     mockSend.mockClear();
     // Ensure AWS SDK v3 never attempts to resolve real credentials in tests
     process.env.AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || "test";
-    process.env.AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || "test";
+    process.env.AWS_SECRET_ACCESS_KEY =
+      process.env.AWS_SECRET_ACCESS_KEY || "test";
     process.env.AWS_SESSION_TOKEN = process.env.AWS_SESSION_TOKEN || "test";
     process.env.AWS_REGION = process.env.AWS_REGION || "us-west-2";
-    process.env.AWS_DEFAULT_REGION = process.env.AWS_DEFAULT_REGION || "us-west-2";
+    process.env.AWS_DEFAULT_REGION =
+      process.env.AWS_DEFAULT_REGION || "us-west-2";
   });
 
   it("should look up an existing VPC", async () => {

@@ -4,16 +4,18 @@ import { MatomoDatabaseStack } from "../lib/matomo-database-stack";
 import { MatomoServiceStack } from "../lib/matomo-service-stack";
 import { MatomoMonitoringStack } from "../lib/matomo-monitoring-stack";
 import { VpcLookupStack } from "../lib/vpc-lookup-stack";
-import { EnvironmentConfig } from "../lib/config/environment-config";
+import {
+  EnvironmentConfig,
+  STAGE_STAGE_TAG_NAME,
+} from "../lib/config/environment-config";
 
 const app = new cdk.App();
 
 // Get configuration from environment variables with defaults
-const stage = process.env.STAGE || "dev";
-const envId = process.env.ENV_ID || "dev-lza";
-const awsAccount = process.env.AWS_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT;
-const awsRegion =
-  process.env.AWS_REGION || process.env.CDK_DEFAULT_REGION || "ca-central-1";
+const stage = process.env.MATOMO_STAGE || "dev";
+const envId = process.env.MATOMO_ENV_ID || "dev-lza";
+const awsAccount = process.env.MATOMO_AWS_ACCOUNT;
+const awsRegion = process.env.MATOMO_AWS_REGION || "ca-central-1";
 
 if (!awsAccount) {
   throw new Error(
@@ -21,26 +23,36 @@ if (!awsAccount) {
   );
 }
 
-const env = {
-  account: awsAccount,
-  region: awsRegion,
-};
+const stageTagName = STAGE_STAGE_TAG_NAME[stage];
+if (!stageTagName) {
+  throw new Error(`Invalid stage: ${stage}`);
+}
+
+const notificationEmails = process.env.MATOMO_NOTIFICATION_EMAILS
+  ? process.env.MATOMO_NOTIFICATION_EMAILS!.split(",")
+  : [];
+
+const allowedOrigins = process.env.MATOMO_ALLOWED_ORIGINS
+  ? process.env.MATOMO_ALLOWED_ORIGINS!.split(",")
+  : [];
 
 // Create environment config
 const envConfig: EnvironmentConfig = {
   account: awsAccount,
   region: awsRegion,
-  stageTagName: stage === "prod" ? "Prod" : "Dev",
-  notificationEmails: process.env.NOTIFICATION_EMAILS
-    ? process.env.NOTIFICATION_EMAILS.split(",")
-    : [],
-  allowedOrigins: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",")
-    : [],
+  stageTagName,
+  notificationEmails,
+  allowedOrigins,
 };
 
 export async function synthesizeCdkApp() {
   const stackPrefix = `matomo-${envId}`;
+
+
+const env: cdk.Environment = {
+  account: awsAccount,
+  region: awsRegion,
+};
 
   // Create VPC stack
   const vpcStack = await VpcLookupStack.create(app, `${stackPrefix}-vpc`, {
@@ -73,15 +85,13 @@ export async function synthesizeCdkApp() {
     },
   );
 
-  // Create monitoring stack if needed
-  if (process.env.ENABLE_MONITORING !== "false") {
-    new MatomoMonitoringStack(app, `${stackPrefix}-monitoring`, {
-      env,
-      envConfig,
-      fargateService: matomoServiceStack.fargateService,
-      targetGroup: matomoServiceStack.targetGroup,
-    });
-  }
+  // Create monitoring stack
+  new MatomoMonitoringStack(app, `${stackPrefix}-monitoring`, {
+    env,
+    envConfig,
+    fargateService: matomoServiceStack.fargateService,
+    targetGroup: matomoServiceStack.targetGroup,
+  });
 
   // Set dependencies
   matomoServiceStack.addDependency(rdsStack);

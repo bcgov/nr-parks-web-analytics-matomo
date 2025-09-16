@@ -1,6 +1,8 @@
 # Matomo Analytics on AWS
 
-This project provisions a production-ready Matomo analytics platform on AWS using the AWS Cloud Development Kit (CDK) in TypeScript. The infrastructure is designed to be secure, scalable, and cost-effective.
+This project provisions a production-ready Matomo analytics platform on AWS
+using the AWS Cloud Development Kit (CDK) in TypeScript. The infrastructure is
+designed to be secure, scalable, and cost-effective.
 
 > **Note**: This is an internal BC Government project for web analytics.
 
@@ -10,14 +12,15 @@ This project provisions a production-ready Matomo analytics platform on AWS usin
   environment.
 - **MatomoDatabaseStack**: Provisions an RDS database for Matomo, including
   secrets management.
-- **MatomoServiceStack**: Deploys Matomo on ECS Fargate with EFS, ALB, WAF, and API
-  Gateway.
+- **MatomoServiceStack**: Deploys Matomo on ECS Fargate with EFS, ALB, WAF, and
+  API Gateway.
 - **MatomoMonitoringStack**: Deploys CloudWatch monitoring and alerting for
   Matomo.
 
 ## Key Features
 
-- **Multi-environment Support**: Deploy to different stages (dev, prod) using environment variables
+- **Multi-environment Support**: Deploy to different stages (dev, prod) using
+  environment variables
 - **High Availability**: Auto-scaling ECS Fargate tasks across multiple AZs
 - **Secure by Default**:
   - Private subnets for all resources
@@ -55,8 +58,8 @@ This project provisions a production-ready Matomo analytics platform on AWS usin
    export AWS_DEFAULT_REGION=ca-central-1
    ```
 
-2. **For BCGov LZA Accounts**:
-   Follow the [AWS SSO Profile Setup Guide](https://github.com/bcgov/quickstart-aws-helpers/blob/main/AWS-SSO-Profiles.md)
+2. **For BCGov LZA Accounts**: Follow the
+   [AWS SSO Profile Setup Guide](https://github.com/bcgov/quickstart-aws-helpers/blob/main/AWS-SSO-Profiles.md)
 
 ### Development Environment
 
@@ -73,6 +76,7 @@ This project provisions a production-ready Matomo analytics platform on AWS usin
 ### Required IAM Permissions
 
 Ensure your IAM user/role has permissions for:
+
 - CloudFormation
 - IAM
 - ECS
@@ -128,30 +132,14 @@ npm test
 
 ### Environment Variables
 
-Create a `.env` file in the project root with the following variables:
-
-```sh
-# Required
-STAGE=dev                        # Deployment stage (dev/stage/prod)
-ENV_ID=dev-lza                   # Environment identifier
-AWS_ACCOUNT=123456789012         # AWS account ID
-AWS_REGION=ca-central-1          # AWS region
-
-# Optional with defaults
-NOTIFICATION_EMAILS=user@example.com  # For alerts
-ALLOWED_ORIGINS=https://example.com   # Comma-separated CORS origins
-```
-
-### Variable Reference
-
-| Variable | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `STAGE` | Yes | Deployment stage | `dev`, `prod` |
-| `ENV_ID` | Yes | Environment identifier | `dev-lza` |
-| `AWS_ACCOUNT` | Yes | AWS account ID | `123456789012` |
-| `AWS_REGION` | Yes | AWS region | `ca-central-1` |
-| `NOTIFICATION_EMAILS` | No | Comma-separated emails for alerts | `user@example.com` |
-| `ALLOWED_ORIGINS` | No | Comma-separated CORS origins | `https://example.com` |
+| Variable              | Required | Description                       | Example               |
+| --------------------- | -------- | --------------------------------- | --------------------- |
+| `MATOMO_STAGE`               | Yes      | Deployment stage                  | `dev`, `prod`         |
+| `MATOMO_ENV_ID`              | Yes      | Environment identifier            | `dev-lza`             |
+| `MATOMO_AWS_ACCOUNT`         | Yes      | AWS account ID                    | `123456789012`        |
+| `MATOMO_AWS_REGION`          | Yes      | AWS region                        | `ca-central-1`        |
+| `MATOMO_NOTIFICATION_EMAILS` | No       | Comma-separated emails for alerts | `user@example.com`    |
+| `MATOMO_ALLOWED_ORIGINS`     | No       | Comma-separated CORS origins      | `https://example.com` |
 
 ## Project Structure
 
@@ -196,7 +184,8 @@ npx cdk destroy -c stage=prod
    API: iam:CreateRole User: ... is not authorized to perform: iam:CreateRole
    ```
 
-   **Solution**: Ensure your IAM user has AdministratorAccess or equivalent permissions
+   **Solution**: Ensure your IAM user has AdministratorAccess or equivalent
+   permissions
 
 3. **Context Caching**
 
@@ -210,7 +199,8 @@ npx cdk destroy -c stage=prod
 
    Some resources (RDS, EFS) have deletion protection enabled by default.
 
-   **Solution**: Disable protection before stack deletion or delete manually in the AWS Console.
+   **Solution**: Disable protection before stack deletion or delete manually in
+   the AWS Console.
 
 ## CDK Context Caching
 
@@ -277,12 +267,12 @@ rm cdk.context.json
 
 ### Useful Commands
 
-| Command | Description |
-|---------|-------------|
-| `cdk ls` | List all stacks |
-| `cdk diff` | Compare deployed stack with current state |
-| `cdk doctor` | Check your setup for potential issues |
-| `cdk destroy` | Destroy a stack |
+| Command       | Description                               |
+| ------------- | ----------------------------------------- |
+| `cdk ls`      | List all stacks                           |
+| `cdk diff`    | Compare deployed stack with current state |
+| `cdk doctor`  | Check your setup for potential issues     |
+| `cdk destroy` | Destroy a stack                           |
 
 ## Cleanup
 
@@ -292,7 +282,8 @@ To remove all resources:
 npx cdk destroy
 ```
 
-> **Note**: RDS and EFS volumes are retained by default to prevent accidental data loss. Delete them manually from the AWS Console if needed.
+> **Note**: RDS and EFS volumes are retained by default to prevent accidental
+> data loss. Delete them manually from the AWS Console if needed.
 
 ---
 
