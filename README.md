@@ -47,6 +47,10 @@ nr-parks-web-analytics-matomo/
 
 Currently, only deployment via AWS CDK is supported. The other examples are for future implementations.
 
+### GitHub Actions Deployment Example
+
+Sample GitHub Actions workflow to deploy the Matomo infrastructure using CDK can be found in the `.github/workflows` directory.
+
 ### Prerequisites
 
 AWS CLI / GCP SDK / OpenShift CLI
