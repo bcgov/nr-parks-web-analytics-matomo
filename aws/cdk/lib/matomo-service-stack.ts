@@ -1,5 +1,7 @@
 import * as cdk from "aws-cdk-lib";
+import { RemovalPolicy } from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import { IVpc } from "aws-cdk-lib/aws-ec2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -7,7 +9,6 @@ import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import { IVpc } from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
 import { EnvironmentConfig } from "./config/environment-config";
 
@@ -111,6 +112,8 @@ export class MatomoServiceStack extends cdk.Stack {
 
     fileSystem.grantRootAccess(taskDefinition.taskRole);
 
+    // credentials for super admin
+    // FUTURE: rotate secrets for better security | Jira: https://bcparksdigital.atlassian.net/browse/ORCA-153
     const matomoAdminSecret = new secretsmanager.Secret(
       this,
       "MatomoAdminSecret",
@@ -121,6 +124,7 @@ export class MatomoServiceStack extends cdk.Stack {
           generateStringKey: "password",
           excludePunctuation: true,
         },
+        removalPolicy: RemovalPolicy.RETAIN,
       },
     );
 
