@@ -2,11 +2,11 @@
 
 This repository provides Infrastructure-as-Code (IaC) configurations for deploying Matomo Analytics across multiple cloud platforms including AWS, GCP, and OpenShift. It supports various IaC tools such as Terraform, AWS CDK, Helm, and Kustomize, enabling flexible, scalable, and secure deployments tailored to different environments.
 
-## 🎯 Project Status
+## Project Status
 
-⚠️ Please Note: This repository is currently under development. As of now, only the implementation for AWS using CDK is complete and functional. The other platforms and tools described in this README represent the planned future state of the project.
+Please Note: This repository is currently under development. As of now, only the implementation for AWS using CDK is complete and functional. The other platforms and tools described in this README represent the planned future state of the project.
 
-🌐 Supported Platforms & Tools
+Supported Platforms & Tools
 AWS
 Terraform: (Planned) Declarative provisioning of AWS resources.
 
@@ -22,7 +22,7 @@ Helm: (Planned) Package manager for Kubernetes applications.
 
 Kustomize: (Planned) Template-free customization of Kubernetes YAML.
 
-## 📁 Folder Structure
+## Folder Structure
 
 The following represents the target folder structure for this project. Directories for planned IaC tools may not be present in the repository yet.
 
@@ -43,7 +43,7 @@ nr-parks-web-analytics-matomo/
     └── workflows/          # CI/CD pipelines
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 Currently, only deployment via AWS CDK is supported. The other examples are for future implementations.
 
@@ -92,7 +92,7 @@ cd openshift/helm
 helm install matomo ./matomo-chart
 ```
 
-## 🔐 Security & Configuration
+## Security & Configuration
 
 HTTPS via ACM or cert-manager
 
@@ -102,10 +102,10 @@ Secrets managed via AWS Secrets Manager, GCP Secret Manager, or Kubernetes Secre
 
 Optional integrations: RDS, CloudFront, Route53, GCS, OpenShift Routes
 
-## 🙌 Contributing
+## Contributing
 
 Contributions are welcome! Please open issues or submit pull requests for improvements, bug fixes, or new features.
 
-## 📬 Contact
+## Contact
 
 For questions or support, please reach out via GitHub Issues or contact the maintainers.

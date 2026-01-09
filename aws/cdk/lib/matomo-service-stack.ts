@@ -71,7 +71,8 @@ export class MatomoServiceStack extends cdk.Stack {
       securityGroup: appSecurityGroup,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
-      throughputMode: efs.ThroughputMode.BURSTING,
+      throughputMode: efs.ThroughputMode.PROVISIONED,
+      provisionedThroughputPerSecond: cdk.Size.mebibytes(20),
       encrypted: true,
     });
 
@@ -163,9 +164,9 @@ export class MatomoServiceStack extends cdk.Stack {
           "curl -f http://localhost:8080/index.php || exit 1",
         ],
         interval: cdk.Duration.seconds(30),
-        timeout: cdk.Duration.seconds(5),
+        timeout: cdk.Duration.seconds(10),
         retries: 3,
-        startPeriod: cdk.Duration.seconds(60),
+        startPeriod: cdk.Duration.seconds(120),
       },
     });
 
