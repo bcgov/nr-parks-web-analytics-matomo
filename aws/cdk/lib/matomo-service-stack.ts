@@ -78,14 +78,15 @@ export class MatomoServiceStack extends cdk.Stack {
 
     // EFS Access Point for Matomo data
     const accessPoint = fileSystem.addAccessPoint("MatomoAccessPoint", {
+      path: "/matomo",
       posixUser: {
-        gid: "0",
-        uid: "0",
+        gid: "33",
+        uid: "33",
       },
       createAcl: {
-        ownerGid: "0",
-        ownerUid: "0",
-        permissions: "775",
+        ownerGid: "33",
+        ownerUid: "33",
+        permissions: "0775",
       },
     });
 
@@ -131,7 +132,7 @@ export class MatomoServiceStack extends cdk.Stack {
 
     const container = taskDefinition.addContainer("MatomoContainer", {
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/bitnami/matomo:latest",
+          "docker.io/library/matomo:5.11.2-apachet",
       ),
       environment: {
         MARIADB_HOST: props.rdsEndpointAddress,
@@ -156,12 +157,12 @@ export class MatomoServiceStack extends cdk.Stack {
           "password",
         ),
       },
-      portMappings: [{ containerPort: 8080 }], // Bitnami Matomo default port
+      portMappings: [{ containerPort: 80 }],
       logging: ecs.LogDriver.awsLogs({ streamPrefix: "matomo-ecs" }),
       healthCheck: {
         command: [
           "CMD-SHELL",
-          "curl -f http://localhost:8080/index.php || exit 1",
+          "curl -f http://localhost:80/index.php || exit 1",
         ],
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(10),
@@ -171,7 +172,7 @@ export class MatomoServiceStack extends cdk.Stack {
     });
 
     container.addMountPoints({
-      containerPath: "/bitnami/matomo",
+      containerPath: "/var/www/html",
       sourceVolume: "MatomoEfsVolume",
       readOnly: false,
     });
@@ -215,10 +216,11 @@ export class MatomoServiceStack extends cdk.Stack {
     });
 
     this.targetGroup = listener.addTargets("MatomoTarget", {
-      port: 8080,
+      port: 80,
       targets: [this.fargateService],
       healthCheck: {
-        path: "/index.php",
+        path: "/",
+        healthyHttpCodes: "200-302",
         interval: cdk.Duration.seconds(60),
         timeout: cdk.Duration.seconds(5),
         healthyThresholdCount: 2,
