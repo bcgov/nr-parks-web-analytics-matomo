@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/node": "22.7.9",
     "@vitest/coverage-v8": "1.6.0",
-    "aws-cdk": "2.1010.0",
+    "aws-cdk": "^2.1136.0",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
     "typescript": "~5.6.3",
