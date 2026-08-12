@@ -46,7 +46,7 @@ export class MatomoDatabaseStack extends cdk.Stack {
 
     this.dbInstance = new rds.DatabaseInstance(this, "MatomoMySqlInstance", {
       engine: rds.DatabaseInstanceEngine.mysql({
-        version: rds.MysqlEngineVersion.of("8.4.5"),
+        version: rds.MysqlEngineVersion.of('8.4.3', '8.4'),
       }),
       vpc,
       vpcSubnets: { subnets: privateSubnets },
