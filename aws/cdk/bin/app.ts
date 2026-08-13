@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
+import * as rds from "aws-cdk-lib/aws-rds";
 import { MatomoDatabaseStack } from "../lib/matomo-database-stack";
 import { MatomoServiceStack } from "../lib/matomo-service-stack";
 import { MatomoMonitoringStack } from "../lib/matomo-monitoring-stack";
@@ -36,6 +37,26 @@ const allowedOrigins = process.env.MATOMO_ALLOWED_ORIGINS
   ? process.env.MATOMO_ALLOWED_ORIGINS!.split(",")
   : [];
 
+function parseMysqlEngineVersion(version: string): rds.MysqlEngineVersion {
+  const trimmedVersion = version.trim();
+  if (!trimmedVersion) {
+    throw new Error("MATOMO_SQL_VERSION cannot be empty");
+  }
+
+  const [major, minor] = trimmedVersion.split(".");
+  if (!major || !minor) {
+    throw new Error(
+      "MATOMO_SQL_VERSION must be in the format <major>.<minor>[.<patch>]",
+    );
+  }
+
+  return rds.MysqlEngineVersion.of(trimmedVersion, `${major}.${minor}`);
+}
+
+const mysqlEngineVersion = process.env.MATOMO_SQL_VERSION
+  ? parseMysqlEngineVersion(process.env.MATOMO_SQL_VERSION)
+  : undefined;
+
 // Create environment config
 const envConfig: EnvironmentConfig = {
   account: awsAccount,
@@ -64,6 +85,7 @@ const env: cdk.Environment = {
   const rdsStack = new MatomoDatabaseStack(app, `${stackPrefix}-rds`, {
     vpc: vpcStack.vpc,
     dataSubnetIds: vpcStack.dataSubnetIds,
+    mysqlEngineVersion,
     env,
   });
 
