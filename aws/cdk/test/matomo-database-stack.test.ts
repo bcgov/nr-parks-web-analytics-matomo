@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as rds from "aws-cdk-lib/aws-rds";
 import { Template } from "aws-cdk-lib/assertions";
 import { MatomoDatabaseStack } from "../lib/matomo-database-stack";
 
@@ -68,7 +69,7 @@ describe("MatomoDatabaseStack", () => {
       DBInstanceClass: "db.t3.small",
       AllocatedStorage: "20",
       Engine: "mysql",
-      EngineVersion: "8.4.4",
+      EngineVersion: "8.4.10",
       StorageEncrypted: true,
       DeletionProtection: false,
     });
@@ -81,6 +82,57 @@ describe("MatomoDatabaseStack", () => {
             "TestStack:ExportsOutputFnGetAttTestSecurityGroup880B57C0GroupIdE8B1161D",
         },
       ],
+    });
+  });
+
+  it("should allow overriding the MySQL engine version", () => {
+    const app = new cdk.App();
+
+    const testStack = new cdk.Stack(app, "TestStackOverride", {
+      env: {
+        account: "123456789012",
+        region: "us-west-2",
+      },
+    });
+
+    const vpc = new ec2.Vpc(testStack, "TestVpcOverride", {
+      subnetConfiguration: [
+        {
+          name: "data",
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          cidrMask: 24,
+        },
+      ],
+    });
+
+    const securityGroup = new ec2.SecurityGroup(
+      testStack,
+      "TestSecurityGroupOverride",
+      {
+        vpc,
+        securityGroupName: "Data",
+        description: "Test security group for data",
+      },
+    );
+
+    const dataSubnetIds = vpc.isolatedSubnets.map((subnet) => subnet.subnetId);
+
+    const stack = new MatomoDatabaseStack(testStack, "TestDatabaseStackOverride", {
+      vpc,
+      dataSubnetIds,
+      rdsSecurityGroup: securityGroup,
+      mysqlEngineVersion: rds.MysqlEngineVersion.of("8.0.39", "8.0"),
+      env: {
+        account: "123456789012",
+        region: "us-west-2",
+      },
+    });
+
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties("AWS::RDS::DBInstance", {
+      Engine: "mysql",
+      EngineVersion: "8.0.39",
     });
   });
 

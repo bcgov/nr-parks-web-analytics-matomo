@@ -9,7 +9,13 @@ interface MatomoDatabaseStackProps extends cdk.StackProps {
   vpc: IVpc;
   dataSubnetIds: string[];
   rdsSecurityGroup?: ec2.ISecurityGroup;
+  mysqlEngineVersion?: rds.MysqlEngineVersion;
 }
+
+export const DEFAULT_MATOMO_MYSQL_ENGINE_VERSION = rds.MysqlEngineVersion.of(
+  "8.4.10",
+  "8.4",
+);
 
 export class MatomoDatabaseStack extends cdk.Stack {
   public readonly dbInstance: rds.DatabaseInstance;
@@ -46,7 +52,8 @@ export class MatomoDatabaseStack extends cdk.Stack {
 
     this.dbInstance = new rds.DatabaseInstance(this, "MatomoMySqlInstance", {
       engine: rds.DatabaseInstanceEngine.mysql({
-        version: rds.MysqlEngineVersion.of('8.4.3', '8.4'),
+        version:
+          props.mysqlEngineVersion ?? DEFAULT_MATOMO_MYSQL_ENGINE_VERSION,
       }),
       vpc,
       vpcSubnets: { subnets: privateSubnets },

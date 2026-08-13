@@ -138,6 +138,7 @@ npm test
 | `MATOMO_ENV_ID`              | Yes      | Environment identifier            | `dev-lza`             |
 | `MATOMO_AWS_ACCOUNT`         | Yes      | AWS account ID                    | `123456789012`        |
 | `MATOMO_AWS_REGION`          | Yes      | AWS region                        | `ca-central-1`        |
+| `MATOMO_SQL_VERSION`         | No       | MySQL engine version override     | `8.0.39`             |
 | `MATOMO_NOTIFICATION_EMAILS` | No       | Comma-separated emails for alerts | `user@example.com`    |
 | `MATOMO_ALLOWED_ORIGINS`     | No       | Comma-separated CORS origins      | `https://example.com` |
 
